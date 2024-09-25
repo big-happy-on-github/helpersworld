@@ -14,6 +14,7 @@
         let stateSpace = {};  // Will store all states (games)
         let qTable = {};  // Q-table to store the state-action values
         let results = {};  // Will store win/loss results for teams
+        let teams = new Set();  // To hold all available teams
 
         // Function to get game data from a specific year
         async function getGameData(year) {
@@ -31,6 +32,10 @@
                     let home = game.getElementsByTagName("home")[0].getAttribute("name").toLowerCase().trim();
                     let away = game.getElementsByTagName("away")[0].getAttribute("name").toLowerCase().trim();
                     let state = [home, away].sort().toString();
+
+                    // Add teams to the set for dropdown options
+                    teams.add(home);
+                    teams.add(away);
 
                     let scoring = game.getElementsByTagName("scoring")[0];
                     let homeScore = scoring ? parseInt(scoring.getAttribute('home_points')) : 0;
@@ -103,43 +108,78 @@
                 await getGameData(year);
             }
             practicePhase();
+            populateDropdowns(); // After data is fetched, populate the dropdowns
         }
 
-        // Main interaction logic
-        async function mainLoop() {
-            await fetchData();
+        // Function to populate dropdowns with team options
+        function populateDropdowns() {
+            let team1Dropdown = document.getElementById('team1');
+            let team2Dropdown = document.getElementById('team2');
+            
+            teams.forEach(team => {
+                let option1 = document.createElement('option');
+                let option2 = document.createElement('option');
+                option1.text = team;
+                option2.text = team;
+                option1.value = team;
+                option2.value = team;
+                team1Dropdown.add(option1);
+                team2Dropdown.add(option2);
+            });
+        }
 
-            while (true) {
-                let team1 = prompt("Enter Team 1:").toLowerCase().trim();
-                let team2 = prompt("Enter Team 2:").toLowerCase().trim();
-                let state = [team1, team2].sort().toString();
+        // Function to make prediction based on selected teams
+        function makePrediction() {
+            let team1 = document.getElementById('team1').value;
+            let team2 = document.getElementById('team2').value;
 
-                if (!qTable[state]) {
-                    qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
-                }
-
-                let action = chooseAction(state);
-                let prediction = action === 0 ? team1 : team2;
-
-                alert(`Prediction: ${prediction}`);
-
-                let userFeedback = prompt("Was the prediction correct? (y/n):").toLowerCase().trim();
-                let reward = userFeedback === 'y' ? 2 : (userFeedback === 'n' ? -5 : 0);
-
-                updateQTable(state, action, reward, state);
-
-                // Update exploration rate
-                explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
-                console.log(`Exploration rate: ${explorationRate}`);
+            if (!team1 || !team2 || team1 === team2) {
+                alert("Please select two different teams.");
+                return;
             }
+
+            let state = [team1, team2].sort().toString();
+
+            if (!qTable[state]) {
+                qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
+            }
+
+            let action = chooseAction(state);
+            let prediction = action === 0 ? team1 : team2;
+
+            document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
+
+            let feedback = confirm("Was the prediction correct?");
+            let reward = feedback ? 2 : -5;
+
+            updateQTable(state, action, reward, state);
+
+            // Update exploration rate
+            explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
+            console.log(`Exploration rate: ${explorationRate}`);
         }
 
-        // Start the main loop when the page is loaded
-        window.onload = mainLoop;
+        // Start fetching data on page load
+        window.onload = fetchData;
 
     </script>
 </head>
 <body>
     <h1>NFL Q-Learning Predictor</h1>
+    <div>
+        <label for="team1">Select Team 1:</label>
+        <select id="team1">
+            <option value="">-- Select Team 1 --</option>
+        </select>
+
+        <label for="team2">Select Team 2:</label>
+        <select id="team2">
+            <option value="">-- Select Team 2 --</option>
+        </select>
+
+        <button onclick="makePrediction()">Predict Winner</button>
+
+        <p id="predictionResult"></p>
+    </div>
 </body>
 </html>
