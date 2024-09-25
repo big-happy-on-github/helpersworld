@@ -115,12 +115,12 @@
             document.getElementById('output').innerHTML = resultText;
 
             // Simulating user feedback and updating the Q-table
-            let userFeedback = prompt("Was the prediction correct? (y/n)");
-            let reward = userFeedback === "y" ? 2 : -5;
-            updateQTable(state, action, reward, state);
+            //let userFeedback = prompt("Was the prediction correct? (y/n)");
+            //let reward = userFeedback === "y" ? 2 : -5;
+            //updateQTable(state, action, reward, state);
 
-            exploration_rate = Math.max(min_exploration_rate, exploration_rate * exploration_decay);
-            console.log(`Exploration rate: ${exploration_rate}`);
+            //exploration_rate = Math.max(min_exploration_rate, exploration_rate * exploration_decay);
+            //console.log(`Exploration rate: ${exploration_rate}`);
         }
 
         // Simulate fetching game data for multiple years
