@@ -21,7 +21,8 @@
             let url = `https://api.sportradar.com/nfl/official/trial/v7/en/games/${year}/reg/schedule.xml?api_key=vambt4sCa5XVqVqQCdaKFDVx98n6eMMW70lop61F`;
 
             try {
-                let response = await fetch(url);
+                const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+                let response = await fetch(proxyUrl + url)
                 let text = await response.text();
                 let parser = new DOMParser();
                 let xml = parser.parseFromString(text, "application/xml");
