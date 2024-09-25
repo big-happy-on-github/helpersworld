@@ -70,7 +70,7 @@
                 "away_score": example_game.away_score,
                 "home_advantage": 1
             };
-            if (state not in q_table) {
+            if (!(state in q_table)) {
                 q_table[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
             }
         }
