@@ -88,7 +88,7 @@
         // Practice phase to train the AI
         function practicePhase() {
             console.log("Practice phase has begun...");
-            for (let i = 0; i < 50000; i++) {
+            for (let i = 0; i < 1000000000; i++) {
                 for (let state in stateSpace) {
                     let gameData = stateSpace[state];
                     let homeScore = gameData.homeScore;
@@ -178,18 +178,18 @@
             let prediction = action === 0 ? team1 : team2;
         
             // Display the prediction
-            document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
+            //document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
         
             // Ask for user feedback to adjust the Q-table
-            let feedback = confirm("Was the prediction correct?");
-            let reward = feedback ? 2 : -5;
+            //let feedback = confirm("Was the prediction correct?");
+            //let reward = feedback ? 2 : -5;
         
             // Update Q-table with the reward
-            updateQTable(state, action, reward, state);
+            //updateQTable(state, action, reward, state);
         
             // Update exploration rate
-            explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
-            console.log(`Exploration rate: ${explorationRate}`);
+            //explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
+            //console.log(`Exploration rate: ${explorationRate}`);
         }
         
         // Start fetching data on page load
