@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Learning NFL Predictor</title>
     <script>
+        // Global variables
         let teams = new Set();  // To hold all available teams
         let stateSpace = {};  // To store all states (games)
         let qTable = {};  // Q-table to store the state-action values
+        let results = {};  // To store win/loss results for each team
         
         // Q-Learning parameters
         let learningRate = 0.2;
@@ -15,66 +17,6 @@
         let explorationRate = 1.0;
         let explorationDecay = 0.995;
         let minExplorationRate = 0.01;
-
-        // Function to make a prediction based on selected teams
-        function makePrediction() {
-            let team1 = document.getElementById('team1').value.toLowerCase();
-            let team2 = document.getElementById('team2').value.toLowerCase();
-        
-            // Ensure both teams are selected and different
-            if (!team1 || !team2 || team1 === team2) {
-                alert("Please select two different teams.");
-                return;
-            }
-        
-            // Sort teams alphabetically to ensure consistent state representation
-            let state = [team1, team2].sort().toString();
-        
-            // Initialize the state in the Q-table if it doesn't exist
-            if (!qTable[state]) {
-                qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
-            }
-        
-            // Heuristic: Adjust score based on past matches
-            let team1Score = 0;
-            let team2Score = 0;
-        
-            // Check if team1 has beaten any teams that team2 lost against and vice versa
-            for (let opponent in results) {
-                if (results[team1] && results[team1].includes(opponent) && results[team2] && !results[team2].includes(opponent)) {
-                    team1Score += 1; // Team1 is more likely to win
-                }
-                if (results[team2] && results[team2].includes(opponent) && results[team1] && !results[team1].includes(opponent)) {
-                    team2Score += 1; // Team2 is more likely to win
-                }
-            }
-        
-            // Get the Q-values for both teams
-            let qValues = qTable[state];
-        
-            // Calculate a combined score for each team (Q-value + heuristic score)
-            let score1 = qValues[0] + team1Score;
-            let score2 = qValues[1] + team2Score;
-        
-            // Choose the team with the higher combined score
-            let action = score1 > score2 ? 0 : 1;
-            let prediction = action === 0 ? team1 : team2;
-        
-            // Display the prediction
-            document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
-        
-            // Ask for user feedback to adjust the Q-table
-            let feedback = confirm("Was the prediction correct?");
-            let reward = feedback ? 2 : -5;
-        
-            // Update Q-table with the reward
-            updateQTable(state, action, reward, state);
-        
-            // Update exploration rate
-            explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
-            console.log(`Exploration rate: ${explorationRate}`);
-        }
-
         
         // Function to get game data from a specific year
         async function getGameData(year) {
@@ -106,6 +48,16 @@
                         awayScore: awayScore,
                         homeAdvantage: home ? 1 : 0
                     };
+        
+                    // Record the outcome in the results dictionary
+                    if (!results[home]) results[home] = [];
+                    if (!results[away]) results[away] = [];
+        
+                    if (homeScore > awayScore) {
+                        results[home].push(away);  // Home team won
+                    } else {
+                        results[away].push(home);  // Away team won
+                    }
         
                     if (!qTable[state]) {
                         qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
@@ -179,6 +131,65 @@
                 team1Dropdown.add(option1);
                 team2Dropdown.add(option2);
             });
+        }
+        
+        // Function to make a prediction based on selected teams
+        function makePrediction() {
+            let team1 = document.getElementById('team1').value.toLowerCase();
+            let team2 = document.getElementById('team2').value.toLowerCase();
+        
+            // Ensure both teams are selected and different
+            if (!team1 || !team2 || team1 === team2) {
+                alert("Please select two different teams.");
+                return;
+            }
+        
+            // Sort teams alphabetically to ensure consistent state representation
+            let state = [team1, team2].sort().toString();
+        
+            // Initialize the state in the Q-table if it doesn't exist
+            if (!qTable[state]) {
+                qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
+            }
+        
+            // Heuristic: Adjust score based on past matches
+            let team1Score = 0;
+            let team2Score = 0;
+        
+            // Check if team1 has beaten any teams that team2 lost against and vice versa
+            for (let opponent in results) {
+                if (results[team1] && results[team1].includes(opponent) && results[team2] && !results[team2].includes(opponent)) {
+                    team1Score += 1; // Team1 is more likely to win
+                }
+                if (results[team2] && results[team2].includes(opponent) && results[team1] && !results[team1].includes(opponent)) {
+                    team2Score += 1; // Team2 is more likely to win
+                }
+            }
+        
+            // Get the Q-values for both teams
+            let qValues = qTable[state];
+        
+            // Calculate a combined score for each team (Q-value + heuristic score)
+            let score1 = qValues[0] + team1Score;
+            let score2 = qValues[1] + team2Score;
+        
+            // Choose the team with the higher combined score
+            let action = score1 > score2 ? 0 : 1;
+            let prediction = action === 0 ? team1 : team2;
+        
+            // Display the prediction
+            document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
+        
+            // Ask for user feedback to adjust the Q-table
+            let feedback = confirm("Was the prediction correct?");
+            let reward = feedback ? 2 : -5;
+        
+            // Update Q-table with the reward
+            updateQTable(state, action, reward, state);
+        
+            // Update exploration rate
+            explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
+            console.log(`Exploration rate: ${explorationRate}`);
         }
         
         // Start fetching data on page load
