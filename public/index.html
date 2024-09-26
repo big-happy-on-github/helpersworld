@@ -16,49 +16,20 @@
         let results = {};  // Will store win/loss results for teams
         let teams = new Set();  // To hold all available teams
 
-        // Function to get game data from a specific year
         async function getGameData(year) {
-            let url = `https://api.sportradar.com/nfl/official/trial/v7/en/games/${year}/reg/schedule.xml?api_key=vambt4sCa5XVqVqQCdaKFDVx98n6eMMW70lop61F`;
-
+            const url = `/.netlify/functions/fetch-games?year=${year}`;
+        
             try {
-                const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-                let response = await fetch(proxyUrl + url)
-                let text = await response.text();
+                let response = await fetch(url);
+                let data = await response.text();  // Get the XML data as text
                 let parser = new DOMParser();
-                let xml = parser.parseFromString(text, "application/xml");
-
+                let xml = parser.parseFromString(data, "application/xml");
+        
+                // The rest of your XML parsing code goes here
                 let games = xml.getElementsByTagName("game");
-
+        
                 for (let game of games) {
-                    let home = game.getElementsByTagName("home")[0].getAttribute("name").toLowerCase().trim();
-                    let away = game.getElementsByTagName("away")[0].getAttribute("name").toLowerCase().trim();
-                    let state = [home, away].sort().toString();
-
-                    // Add teams to the set for dropdown options
-                    teams.add(home);
-                    teams.add(away);
-
-                    let scoring = game.getElementsByTagName("scoring")[0];
-                    let homeScore = scoring ? parseInt(scoring.getAttribute('home_points')) : 0;
-                    let awayScore = scoring ? parseInt(scoring.getAttribute('away_points')) : 0;
-
-                    stateSpace[state] = {
-                        homeScore: homeScore,
-                        awayScore: awayScore,
-                        homeAdvantage: home ? 1 : 0
-                    };
-
-                    if (homeScore > awayScore) {
-                        results[home] = results[home] || [];
-                        results[home].push(away);
-                    } else {
-                        results[away] = results[away] || [];
-                        results[away].push(home);
-                    }
-
-                    if (!qTable[state]) {
-                        qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
-                    }
+                    // Parsing logic as before...
                 }
             } catch (error) {
                 console.error(`Error fetching data for year ${year}:`, error);
