@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Q-Learning NFL Predictor</title>
     <script>
+        let teams = new Set();  // To hold all available teams
+        let stateSpace = {};  // To store all states (games)
+        let qTable = {};  // Q-table to store the state-action values
+        
         // Q-Learning parameters
         let learningRate = 0.2;
         let discountFactor = 0.95;
         let explorationRate = 1.0;
         let explorationDecay = 0.995;
         let minExplorationRate = 0.01;
-        let stateSpace = {};  // Will store all states (games)
-        let qTable = {};  // Q-table to store the state-action values
-        let results = {};  // Will store win/loss results for teams
-        let teams = new Set();  // To hold all available teams
         
         // Function to get game data from a specific year
         async function getGameData(year) {
@@ -55,7 +55,24 @@
                 console.error(`Error fetching data for year ${year}:`, error);
             }
         }
-
+        
+        // Function to choose action based on exploration-exploitation trade-off
+        function chooseAction(state) {
+            if (Math.random() < explorationRate) {
+                return Math.floor(Math.random() * 2);  // Random action (exploration)
+            } else {
+                return qTable[state].indexOf(Math.max(...qTable[state]));  // Exploit best option
+            }
+        }
+        
+        // Function to update the Q-table
+        function updateQTable(state, action, reward, nextState) {
+            let bestNextAction = qTable[nextState].indexOf(Math.max(...qTable[nextState]));
+            qTable[state][action] = qTable[state][action] + learningRate * (
+                reward + discountFactor * qTable[nextState][bestNextAction] - qTable[state][action]
+            );
+        }
+        
         // Practice phase to train the AI
         function practicePhase() {
             console.log("Practice phase has begun...");
@@ -75,11 +92,10 @@
             }
             console.log("Practice phase complete");
         }
-
         
         // Function to fetch data from multiple years
         async function fetchData() {
-            for (let year = 2015; year <= 2023; year++) {
+            for (let year = 2015; year <= 2025; year++) {
                 console.log(`Fetching data for ${year}...`);
                 await getGameData(year);
             }
@@ -96,19 +112,6 @@
             teams.forEach(team => {
                 let option1 = document.createElement('option');
                 let option2 = document.createElement('option');
-                option1.text = team;
-                option2.text = team;
-                option1.value = team;
-                option2.value = team;
-                team1Dropdown.add(option1);
-                team2Dropdown.add(option2);
-            });
-        }
-        
-        // Start fetching data on page load
-        window.onload = fetchData;
-
-
     </script>
 </head>
 <body>
