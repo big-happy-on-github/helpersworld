@@ -15,7 +15,8 @@
         let qTable = {};  // Q-table to store the state-action values
         let results = {};  // Will store win/loss results for teams
         let teams = new Set();  // To hold all available teams
-
+        
+        // Function to get game data from a specific year
         async function getGameData(year) {
             const url = `/.netlify/functions/fetch-games?year=${year}`;
         
@@ -25,64 +26,47 @@
                 let parser = new DOMParser();
                 let xml = parser.parseFromString(data, "application/xml");
         
-                // The rest of your XML parsing code goes here
                 let games = xml.getElementsByTagName("game");
         
                 for (let game of games) {
-                    // Parsing logic as before...
+                    let home = game.getElementsByTagName("home")[0].getAttribute("name").toLowerCase().trim();
+                    let away = game.getElementsByTagName("away")[0].getAttribute("name").toLowerCase().trim();
+                    let state = [home, away].sort().toString();
+        
+                    // Add teams to the set for dropdown options
+                    teams.add(home);
+                    teams.add(away);
+        
+                    let scoring = game.getElementsByTagName("scoring")[0];
+                    let homeScore = scoring ? parseInt(scoring.getAttribute('home_points')) : 0;
+                    let awayScore = scoring ? parseInt(scoring.getAttribute('away_points')) : 0;
+        
+                    stateSpace[state] = {
+                        homeScore: homeScore,
+                        awayScore: awayScore,
+                        homeAdvantage: home ? 1 : 0
+                    };
+        
+                    if (!qTable[state]) {
+                        qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
+                    }
                 }
             } catch (error) {
                 console.error(`Error fetching data for year ${year}:`, error);
             }
         }
-
-        // Function to choose action
-        function chooseAction(state) {
-            if (Math.random() < explorationRate) {
-                return Math.floor(Math.random() * 2);  // Random action (exploration)
-            } else {
-                return qTable[state].indexOf(Math.max(...qTable[state]));  // Exploit best option
-            }
-        }
-
-        // Function to update Q-table
-        function updateQTable(state, action, reward, nextState) {
-            let bestNextAction = qTable[nextState].indexOf(Math.max(...qTable[nextState]));
-            qTable[state][action] = qTable[state][action] + learningRate * (
-                reward + discountFactor * qTable[nextState][bestNextAction] - qTable[state][action]
-            );
-        }
-
-        // Practice phase to train the AI
-        function practicePhase() {
-            console.log("Practice phase has begun...");
-            for (let i = 0; i < 50000; i++) {
-                for (let state in stateSpace) {
-                    let gameData = stateSpace[state];
-                    let homeScore = gameData.homeScore;
-                    let awayScore = gameData.awayScore;
-
-                    let actualWinner = homeScore > awayScore ? 0 : 1;
-
-                    let action = chooseAction(state);
-                    let reward = action === actualWinner ? 5 : -10;
-
-                    updateQTable(state, action, reward, state);
-                }
-            }
-            console.log("Practice phase complete");
-        }
-
-        // Fetch data from multiple years
+        
+        // Function to fetch data from multiple years
         async function fetchData() {
             for (let year = 2015; year <= 2025; year++) {
                 console.log(`Fetching data for ${year}...`);
                 await getGameData(year);
             }
-            practicePhase();
-            populateDropdowns(); // After data is fetched, populate the dropdowns
+            
+            practicePhase();  // Start the practice phase after all data is fetched
+            populateDropdowns();  // Populate the dropdowns after the team data is available
         }
-
+        
         // Function to populate dropdowns with team options
         function populateDropdowns() {
             let team1Dropdown = document.getElementById('team1');
@@ -99,40 +83,10 @@
                 team2Dropdown.add(option2);
             });
         }
-
-        // Function to make prediction based on selected teams
-        function makePrediction() {
-            let team1 = document.getElementById('team1').value;
-            let team2 = document.getElementById('team2').value;
-
-            if (!team1 || !team2 || team1 === team2) {
-                alert("Please select two different teams.");
-                return;
-            }
-
-            let state = [team1, team2].sort().toString();
-
-            if (!qTable[state]) {
-                qTable[state] = [Math.random() * 0.2 - 0.1, Math.random() * 0.2 - 0.1];
-            }
-
-            let action = chooseAction(state);
-            let prediction = action === 0 ? team1 : team2;
-
-            document.getElementById('predictionResult').innerText = `Predicted Winner: ${prediction}`;
-
-            let feedback = confirm("Was the prediction correct?");
-            let reward = feedback ? 2 : -5;
-
-            updateQTable(state, action, reward, state);
-
-            // Update exploration rate
-            explorationRate = Math.max(minExplorationRate, explorationRate * explorationDecay);
-            console.log(`Exploration rate: ${explorationRate}`);
-        }
-
+        
         // Start fetching data on page load
         window.onload = fetchData;
+
 
     </script>
 </head>
