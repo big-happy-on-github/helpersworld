@@ -112,8 +112,17 @@
             teams.forEach(team => {
                 let option1 = document.createElement('option');
                 let option2 = document.createElement('option');
+                option1.text = team;
+                option2.text = team;
+                option1.value = team;
+                option2.value = team;
+                team1Dropdown.add(option1);
+                team2Dropdown.add(option2);
             });
         }
+        
+        // Start fetching data on page load
+        window.onload = fetchData;
     </script>
 </head>
 <body>
