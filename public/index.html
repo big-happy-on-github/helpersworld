@@ -55,6 +55,27 @@
                 console.error(`Error fetching data for year ${year}:`, error);
             }
         }
+
+        // Practice phase to train the AI
+        function practicePhase() {
+            console.log("Practice phase has begun...");
+            for (let i = 0; i < 50000; i++) {
+                for (let state in stateSpace) {
+                    let gameData = stateSpace[state];
+                    let homeScore = gameData.homeScore;
+                    let awayScore = gameData.awayScore;
+        
+                    let actualWinner = homeScore > awayScore ? 0 : 1;
+        
+                    let action = chooseAction(state);
+                    let reward = action === actualWinner ? 5 : -10;
+        
+                    updateQTable(state, action, reward, state);
+                }
+            }
+            console.log("Practice phase complete");
+        }
+
         
         // Function to fetch data from multiple years
         async function fetchData() {
